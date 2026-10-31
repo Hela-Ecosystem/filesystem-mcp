@@ -1,7 +1,7 @@
 # FileSystem MCP Server
 
 
-> **Part of the [HeLa MCP Ecosystem](https://github.com/1999AZZAR/hela-mcp-ecosystem)** — This server is **HeLa Membrane (`hela-membrane`)** — the *Workspace FS* component of the HeLa cellular architecture. See the [ecosystem docs](https://github.com/1999AZZAR/hela-mcp-ecosystem) for profiles, workflows, and multi-client setup.
+> **Part of the [HeLa MCP Ecosystem](https://github.com/Hela-Ecosystem/hela-mcp-ecosystem)** — This server is **HeLa Membrane (`hela-membrane`)** — the *Workspace FS* component of the HeLa cellular architecture. See the [ecosystem docs](https://github.com/Hela-Ecosystem/hela-mcp-ecosystem) for profiles, workflows, and multi-client setup.
 
 A comprehensive Model Context Protocol (MCP) server for advanced file system operations. This server provides structured file management capabilities including file operations, directory management, file watching, search functionality, and archiving operations.
 
@@ -290,7 +290,7 @@ Generates cached preview of file content (first lines/chars) for quick inspectio
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/1999AZZAR/filesystem-mcp.git
+git clone https://github.com/Hela-Ecosystem/filesystem-mcp.git
 cd filesystem-mcp
 ```
 
@@ -1114,7 +1114,7 @@ MIT License - see LICENSE file for details.
 ## Support
 
 For issues and questions:
-- **GitHub Issues**: [Open an issue](https://github.com/1999AZZAR/filesystem-mcp/issues)
+- **GitHub Issues**: [Open an issue](https://github.com/Hela-Ecosystem/filesystem-mcp/issues)
 - **Documentation**: Check this README for comprehensive usage examples
 - **Examples**: See the examples section above for common use cases
 

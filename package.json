@@ -47,10 +47,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/1999AZZAR/filesystem-mcp-server.git"
+    "url": "https://github.com/Hela-Ecosystem/filesystem-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/1999AZZAR/filesystem-mcp-server/issues"
+    "url": "https://github.com/Hela-Ecosystem/filesystem-mcp-server/issues"
   },
-  "homepage": "https://github.com/1999AZZAR/filesystem-mcp-server#readme"
+  "homepage": "https://github.com/Hela-Ecosystem/filesystem-mcp-server#readme"
 }

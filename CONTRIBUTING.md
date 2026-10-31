@@ -34,7 +34,7 @@ Thank you for your interest in contributing to the FileSystem MCP Server! This d
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/1999AZZAR/filesystem-mcp-server.git
+   git clone https://github.com/Hela-Ecosystem/filesystem-mcp-server.git
    cd filesystem-mcp-server
    ```
 
