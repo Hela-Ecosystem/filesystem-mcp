@@ -50,7 +50,7 @@ export class FileSystemMCPServer {
     const server = new Server(
       {
         name: 'filesystem-mcp-server',
-        version: '1.0.0',
+        version: '3.0.0',
       },
       {
         capabilities: {
