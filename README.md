@@ -1,5 +1,9 @@
 # FileSystem MCP Server
 
+<!-- hela:version:start -->
+**MCP server:** `hela-membrane` · **Version:** `3.0.0` · **Canonical tools:** 16. [Current tool reference](docs/TOOLS.md).
+<!-- hela:version:end -->
+
 
 > **Part of the [HeLa MCP Ecosystem](https://github.com/Hela-Ecosystem/hela-mcp-ecosystem)** — This server is **HeLa Membrane (`hela-membrane`)** — the *Workspace FS* component of the HeLa cellular architecture. See the [ecosystem docs](https://github.com/Hela-Ecosystem/hela-mcp-ecosystem) for profiles, workflows, and multi-client setup.
 
