@@ -1103,7 +1103,7 @@ The server includes comprehensive error handling:
 
 ## License
 
-MIT License - see LICENSE file for details.
+GPL-3.0-or-later License - see LICENSE file for details.
 
 ## Contributing
 
