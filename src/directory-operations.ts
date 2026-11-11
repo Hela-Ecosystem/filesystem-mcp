@@ -204,21 +204,21 @@ export class DirectoryOperations {
    */
   static async getDirectorySize(path: string): Promise<FileOperationResult> {
     try {
-      let totalSize = 0;
-      let fileCount = 0;
-      let dirCount = 0;
-      
-      await this.calculateDirectorySize(path, { totalSize, fileCount, dirCount });
+      // Accumulate into one object: passing a fresh literal would mutate a copy
+      // and always report zeros.
+      const stats = { totalSize: 0, fileCount: 0, dirCount: 0 };
+
+      await this.calculateDirectorySize(path, stats);
       
       return {
         success: true,
         message: 'Directory size calculated successfully',
         path,
         data: {
-          totalSize,
-          fileCount,
-          dirCount,
-          humanReadable: this.formatBytes(totalSize)
+          totalSize: stats.totalSize,
+          fileCount: stats.fileCount,
+          dirCount: stats.dirCount,
+          humanReadable: this.formatBytes(stats.totalSize)
         }
       };
     } catch (error) {
