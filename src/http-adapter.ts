@@ -123,17 +123,20 @@ export class HttpAdapter {
           req.on('data', chunk => bodyBuffer.push(chunk));
           req.on('end', async () => {
             const rawBody = Buffer.concat(bodyBuffer).toString('utf8');
-            let parsedBody: any;
+            let parsedBody: Record<string, unknown> | null;
             try {
-              parsedBody = rawBody ? JSON.parse(rawBody) : null;
+              const parsed = rawBody ? JSON.parse(rawBody) : null;
+              parsedBody = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+                ? parsed as Record<string, unknown>
+                : null;
             } catch {
               parsedBody = null;
             }
 
-            const method = parsedBody?.method || mcpMethod;
+            const method = typeof parsedBody?.['method'] === 'string' ? parsedBody['method'] : mcpMethod;
 
             if (method === 'server/discover') {
-              const id = parsedBody?.id ?? null;
+              const id = parsedBody?.['id'] ?? null;
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({
                 jsonrpc: '2.0',
@@ -156,7 +159,7 @@ export class HttpAdapter {
                 enableJsonResponse: true,
               });
               await mcpServer.connect(transport);
-              await transport.handleRequest(req, res, parsedBody);
+              await transport.handleRequest(req, res, parsedBody as Parameters<typeof transport.handleRequest>[2]);
               res.on('close', () => {
                 transport.close().catch(() => {});
                 mcpServer.close().catch(() => {});
@@ -168,7 +171,7 @@ export class HttpAdapter {
                 res.end(JSON.stringify({
                   jsonrpc: '2.0',
                   error: { code: -32603, message: 'Internal server error', data: String(transportErr) },
-                  id: parsedBody?.id ?? null,
+                  id: parsedBody?.['id'] ?? null,
                 }));
               }
             }

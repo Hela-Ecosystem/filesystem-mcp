@@ -13,6 +13,24 @@ import { AdvancedOperations } from './advanced-operations.js';
 import { loadWorkspacePolicy, policyCheck, type WorkspacePolicy } from './policy.js';
 import { textResult, errorResult } from './envelope.js';
 import { HttpAdapter } from './http-adapter.js';
+
+interface DirectoryStructure {
+  name: string;
+  type: 'directory';
+  path: string;
+  children: Array<{
+    name: string;
+    type: 'file' | 'directory';
+    path: string;
+    size: number;
+  }>;
+  stats: {
+    totalFiles: number;
+    totalDirs: number;
+    totalSize: number;
+  };
+  error?: string;
+}
 import {
   ReadFileSchema,
   WriteFileSchema,
@@ -36,7 +54,7 @@ import {
 export class FileSystemMCPServer {
   private server: Server;
   private readonly policy: WorkspacePolicy = loadWorkspacePolicy();
-  private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
+  private cache: Map<string, { data: Record<string, unknown>; timestamp: number; ttl: number }> = new Map();
   private readonly DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   private readonly FILE_WATCH_CACHE_TTL = 30 * 1000; // 30 seconds for watch status
   private httpAdapter?: HttpAdapter;
@@ -65,11 +83,11 @@ export class FileSystemMCPServer {
     return server;
   }
 
-  private getCacheKey(type: string, params: any): string {
+  private getCacheKey(type: string, params: unknown): string {
     return `${type}:${JSON.stringify(params)}`;
   }
 
-  private getCachedData(key: string): any | null {
+  private getCachedData(key: string): Record<string, unknown> | null {
     const cached = this.cache.get(key);
     if (!cached) return null;
 
@@ -81,7 +99,7 @@ export class FileSystemMCPServer {
     return cached.data;
   }
 
-  private setCachedData(key: string, data: any, ttl: number = this.DEFAULT_CACHE_TTL): void {
+  private setCachedData(key: string, data: Record<string, unknown>, ttl: number = this.DEFAULT_CACHE_TTL): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -346,68 +364,100 @@ export class FileSystemMCPServer {
         await policyCheck(this.policy, name, (args || {}) as Record<string, unknown>);
         switch (name) {
           case 'read_file':
+            {
             const readResult = await FileOperations.readFile(ReadFileSchema.parse(args));
             return textResult(name, readResult);
+            }
           
           case 'write_file':
+            {
             const writeResult = await FileOperations.writeFile(WriteFileSchema.parse(args));
             return textResult(name, writeResult);
+            }
           
           case 'copy_file':
+            {
             const copyResult = await FileOperations.copyFile(CopyFileSchema.parse(args));
             return textResult(name, copyResult);
+            }
           
           case 'move_file':
+            {
             const moveResult = await FileOperations.moveFile(MoveFileSchema.parse(args));
             return textResult(name, moveResult);
+            }
           
           case 'delete_file':
+            {
             const deleteResult = await FileOperations.deleteFile(DeleteFileSchema.parse(args));
             return textResult(name, deleteResult);
+            }
           
           case 'get_file_info':
+            {
             const infoResult = await FileOperations.getFileInfo(GetFileInfoSchema.parse(args));
             return textResult(name, infoResult);
+            }
           
           case 'create_directory':
+            {
             const createDirResult = await DirectoryOperations.createDirectory(CreateDirectorySchema.parse(args));
             return textResult(name, createDirResult);
+            }
           
           case 'list_directory':
+            {
             const listResult = await DirectoryOperations.listDirectory(ListDirectorySchema.parse(args));
             return textResult(name, listResult);
+            }
           
           case 'find_files':
+            {
             const findResult = await DirectoryOperations.findFiles(FindFilesSchema.parse(args));
             return textResult(name, findResult);
+            }
           
           case 'search_in_files':
+            {
             const searchResult = await AdvancedOperations.searchInFiles(SearchInFilesSchema.parse(args));
             return textResult(name, searchResult);
+            }
           
           case 'watch_file':
+            {
             const watchResult = await AdvancedOperations.watchFile(WatchFileSchema.parse(args));
             return textResult(name, watchResult);
+            }
           
           case 'stop_watching':
+            {
             const stopWatchResult = await AdvancedOperations.stopWatching(args?.['path'] as string);
             return textResult(name, stopWatchResult);
+            }
           
           case 'compare_files':
+            {
             const compareResult = await AdvancedOperations.compareFiles(CompareFilesSchema.parse(args));
             return textResult(name, compareResult);
+            }
           
           case 'archive_files':
+            {
             const archiveResult = await AdvancedOperations.archiveFiles(ArchiveFilesSchema.parse(args));
             return textResult(name, archiveResult);
+            }
           
           case 'extract_archive':
+            {
             const extractResult = await AdvancedOperations.extractArchive(args?.['archivePath'] as string, args?.['destination'] as string);
             return textResult(name, extractResult);
+            }
           
           case 'get_directory_size':
+            {
             const sizeResult = await DirectoryOperations.getDirectorySize(args?.['path'] as string);
             return textResult(name, sizeResult);
+            }
           
           default:
             throw new Error(`Unknown tool: ${name}`);
@@ -475,7 +525,7 @@ export class FileSystemMCPServer {
     });
 
     // Read resource handler
-    server.setRequestHandler(ReadResourceRequestSchema, async (request: any) => {
+    server.setRequestHandler(ReadResourceRequestSchema, async (request: { params: { uri: string } }) => {
       const { uri } = request.params;
 
       try {
@@ -496,7 +546,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -527,7 +577,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -565,7 +615,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -596,7 +646,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data, this.FILE_WATCH_CACHE_TTL);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -627,7 +677,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -658,7 +708,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -689,7 +739,7 @@ export class FileSystemMCPServer {
             };
             this.setCachedData(cacheKey, data);
           } else {
-            data.cached = true;
+            data['cached'] = true;
           }
 
           return {
@@ -710,11 +760,11 @@ export class FileSystemMCPServer {
     });
   }
 
-  private async getDirectoryStructure(path: string): Promise<any> {
+  private async getDirectoryStructure(path: string): Promise<DirectoryStructure> {
     try {
       const result = await DirectoryOperations.listDirectory({ path, recursive: false, includeHidden: false });
       const contents = result.success ? (result.data?.items || []) : [];
-      const structure: any = {
+      const structure: DirectoryStructure = {
         name: path.split('/').pop() || path,
         type: 'directory',
         path: path,
@@ -761,7 +811,7 @@ export class FileSystemMCPServer {
     }
   }
 
-  private async getFilePreview(path: string): Promise<any> {
+  private async getFilePreview(path: string): Promise<Record<string, unknown>> {
     try {
       // Get basic file info first
       const statsResult = await FileOperations.getFileInfo({ path, followSymlinks: true });
@@ -793,7 +843,7 @@ export class FileSystemMCPServer {
           preview = 'Unable to read file content';
           canPreview = false;
         }
-      } catch (error) {
+      } catch {
         preview = 'Binary file or read error';
         canPreview = false;
       }

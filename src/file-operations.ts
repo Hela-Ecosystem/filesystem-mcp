@@ -10,7 +10,11 @@ export class FileOperations {
   /**
    * Read file content with optional encoding and range
    */
-  static async readFile(args: ReadFileArgs): Promise<FileOperationResult> {
+  static async readFile(args: ReadFileArgs): Promise<FileOperationResult<{
+    content: string | Buffer;
+    encoding: string;
+    size: number;
+  }>> {
     try {
       const { path, encoding = 'utf8', offset, limit } = ReadFileSchema.parse(args);
       
@@ -259,7 +263,7 @@ export class FileOperations {
   /**
    * Get detailed file information
    */
-  static async getFileInfo(args: GetFileInfoArgs): Promise<FileOperationResult> {
+  static async getFileInfo(args: GetFileInfoArgs): Promise<FileOperationResult<FileInfo>> {
     try {
       const { path, followSymlinks = true } = GetFileInfoSchema.parse(args);
       

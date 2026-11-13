@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
-import { glob } from 'glob';
+import { basename, extname, join, resolve } from 'path';
+import { glob, type GlobOptions } from 'glob';
+import type { Stats } from 'fs';
 import archiver from 'archiver';
 import chokidar from 'chokidar';
 import { SearchInFilesSchema, WatchFileSchema, CompareFilesSchema, ArchiveFilesSchema } from './types.js';
@@ -34,20 +35,19 @@ export class AdvancedOperations {
 
       // Build file pattern for glob
       const searchPattern = filePattern || '**/*';
-      const globOptions: any = {
+      const globOptions: GlobOptions = {
         cwd: resolvedDir,
         dot: includeHidden,
-        caseSensitiveMatch: caseSensitive
+        nocase: !caseSensitive
       };
 
+      let globPattern = searchPattern;
       if (maxDepth !== undefined) {
         const depthPattern = maxDepth === 1 ? '' : '/*'.repeat(maxDepth - 1);
-        globOptions.pattern = join(searchPattern, depthPattern);
-      } else {
-        globOptions.pattern = searchPattern;
+        globPattern = join(searchPattern, depthPattern);
       }
 
-      const files = await glob(globOptions.pattern || searchPattern, globOptions);
+      const files = await glob(globPattern, globOptions);
 
       // Create regex pattern
       let regexPattern = pattern;
@@ -60,7 +60,7 @@ export class AdvancedOperations {
       // Search in each file
       for (const file of files) {
         try {
-          const fullPath = join(resolvedDir, file);
+          const fullPath = join(resolvedDir, String(file));
           const fileInfo = await FileOperations.getFileInfo({ path: fullPath, followSymlinks: true });
           
           if (!fileInfo.success || !fileInfo.data?.isFile) {
@@ -69,7 +69,7 @@ export class AdvancedOperations {
 
           const content = await fs.readFile(fullPath, 'utf8');
           const lines = content.split('\n');
-          const matches: any[] = [];
+          const matches: SearchResult['matches'] = [];
 
           // Search for matches
           for (let i = 0; i < lines.length; i++) {
@@ -140,12 +140,12 @@ export class AdvancedOperations {
       }
 
       const watcher = chokidar.watch(path, {
-        ignored: ignored || /(^|[\/\\])\../, // ignore dotfiles by default
+        ignored: ignored || /(^|[\\/])\../, // ignore dotfiles by default
         persistent: true,
         ignoreInitial,
         followSymlinks: false,
         depth: recursive ? undefined : 0
-      } as any);
+      });
 
       this.watchers.set(path, watcher);
 
@@ -338,7 +338,9 @@ export class AdvancedOperations {
       }
 
       // Create archive
-      const archive = archiver(format as any, {
+      const archiveFormat = format === 'gzip' ? 'tar' : format;
+      const archive = archiver(archiveFormat, {
+        ...(format === 'gzip' ? { gzip: true } : {}),
         zlib: { level: compressionLevel }
       });
 
@@ -432,9 +434,9 @@ export class AdvancedOperations {
   /**
    * Convert fs.Stats to FileInfo
    */
-  private static statsToFileInfo(path: string, stats: any): any {
+  private static statsToFileInfo(path: string, stats: Stats): FileWatchEvent['stats'] {
     return {
-      name: require('path').basename(path),
+      name: basename(path),
       path,
       type: stats.isDirectory() ? 'directory' : 'file',
       size: stats.size,
@@ -444,7 +446,9 @@ export class AdvancedOperations {
       permissions: stats.mode.toString(8),
       createdAt: stats.birthtime,
       modifiedAt: stats.mtime,
-      accessedAt: stats.atime
+      accessedAt: stats.atime,
+      extension: extname(path) || undefined,
+      mimeType: undefined
     };
   }
 

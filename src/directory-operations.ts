@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
-import { glob } from 'glob';
+import { glob, type GlobOptions } from 'glob';
 import { CreateDirectorySchema, ListDirectorySchema, FindFilesSchema } from './types.js';
 import type { FileInfo, FileOperationResult, CreateDirectoryArgs, ListDirectoryArgs, FindFilesArgs } from './types.js';
 import { FileOperations } from './file-operations.js';
@@ -16,7 +16,7 @@ export class DirectoryOperations {
     try {
       const { path, recursive = false, mode } = CreateDirectorySchema.parse(args);
       
-      const options: any = { recursive };
+      const options: { recursive: boolean; mode?: number } = { recursive };
       if (mode) {
         options.mode = parseInt(mode, 8);
       }
@@ -45,7 +45,12 @@ export class DirectoryOperations {
   /**
    * List directory contents with optional filtering and recursion
    */
-  static async listDirectory(args: ListDirectoryArgs): Promise<FileOperationResult> {
+  static async listDirectory(args: ListDirectoryArgs): Promise<FileOperationResult<{
+    items: FileInfo[];
+    count: number;
+    recursive: boolean;
+    includeHidden: boolean;
+  }>> {
     try {
       const { path, recursive = false, includeHidden = false, maxDepth, fileTypes } = ListDirectorySchema.parse(args);
       
@@ -92,11 +97,11 @@ export class DirectoryOperations {
       const resolvedDir = resolve(directory);
       
       // Build glob options
-      const globOptions: any = {
+      const globOptions: GlobOptions = {
         cwd: resolvedDir,
         nodir: fileTypes?.includes('directory') === false,
         dot: includeHidden,
-        caseSensitiveMatch: caseSensitive
+        nocase: !caseSensitive
       };
       
       // Use the pattern directly with glob
@@ -106,7 +111,7 @@ export class DirectoryOperations {
       const fileInfos: FileInfo[] = [];
       for (const match of matches) {
         try {
-          const fullPath = join(resolvedDir, match);
+          const fullPath = join(resolvedDir, String(match));
           const result = await FileOperations.getFileInfo({ path: fullPath, followSymlinks: true });
           if (result.success && result.data) {
             fileInfos.push(result.data);
@@ -194,7 +199,7 @@ export class DirectoryOperations {
           // Skip files that can't be accessed
         }
       }
-    } catch (error) {
+    } catch {
       // Skip directories that can't be accessed
     }
   }

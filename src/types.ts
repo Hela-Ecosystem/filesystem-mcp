@@ -23,11 +23,11 @@ export interface FileInfo {
 }
 
 // File operation result interface
-export interface FileOperationResult {
+export interface FileOperationResult<T = unknown> {
   success: boolean;
   message: string;
   path?: string;
-  data?: any;
+  data?: T;
   error?: string;
 }
 
