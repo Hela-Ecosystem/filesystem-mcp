@@ -1,7 +1,7 @@
 # FileSystem MCP Server
 
 <!-- hela:version:start -->
-**MCP server:** `hela-membrane` · **Version:** `3.0.0` · **Canonical tools:** 16. [Current tool reference](docs/TOOLS.md).
+**MCP server:** `hela-membrane` · **Version:** `3.0.1` · **Canonical tools:** 16. [Current tool reference](docs/TOOLS.md).
 <!-- hela:version:end -->
 
 

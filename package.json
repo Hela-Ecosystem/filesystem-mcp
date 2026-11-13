@@ -1,6 +1,6 @@
 {
   "name": "filesystem-mcp-server",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A comprehensive Model Context Protocol (MCP) server for file system operations with advanced features like file watching, search, and batch operations.",
   "author": "Azzar Budiyanto",
   "license": "GPL-3.0-or-later",

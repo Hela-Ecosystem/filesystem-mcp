@@ -2,6 +2,15 @@
 
 All notable changes to this project.
 
+## [3.0.1] - 2026-11-13
+
+### Fixed
+- Replaced Unix-only cleanup with the portable Node maintenance runner.
+- Accumulated recursive directory sizes correctly.
+
+### Changed
+- Declared the distributed server under GPL-3.0-or-later and synchronized documentation.
+
 ## [3.0.0] - 2026-10-31
 
 ### Changed
