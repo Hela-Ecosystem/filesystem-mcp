@@ -112,6 +112,7 @@ export class DirectoryOperations {
       for (const match of matches) {
         try {
           const fullPath = join(resolvedDir, String(match));
+          if ((await fs.lstat(fullPath)).isSymbolicLink()) continue;
           const result = await FileOperations.getFileInfo({ path: fullPath, followSymlinks: true });
           if (result.success && result.data) {
             fileInfos.push(result.data);
@@ -171,6 +172,12 @@ export class DirectoryOperations {
       
       for (const entry of entries) {
         const fullPath = join(dirPath, entry.name);
+
+        // Do not follow links while traversing an allowed directory: a link
+        // can expose metadata or descendants outside the configured root.
+        if (entry.isSymbolicLink()) {
+          continue;
+        }
         
         // Skip hidden files if not included
         if (!options.includeHidden && entry.name.startsWith('.')) {

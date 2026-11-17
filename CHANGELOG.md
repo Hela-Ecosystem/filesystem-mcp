@@ -2,6 +2,12 @@
 
 All notable changes to this project.
 
+## [3.0.2] - 2026-11-18
+
+### Security
+- Do not follow symlinks while listing, finding, or searching within a workspace root.
+- Add edge-case coverage for symlink escapes, archive expansion, watcher cleanup, and large file handling.
+
 ## [3.0.1] - 2026-11-13
 
 ### Fixed

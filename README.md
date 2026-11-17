@@ -319,7 +319,7 @@ npm start
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `HELA_ALLOWED_ROOTS` (or `ALLOWED_ROOTS`) | *unset = full access* | Colon-separated workspace roots; when set, every path argument is canonicalized (symlink-aware, including non-existent tails) and tools outside the roots are denied. Logged to stderr on startup either way. |
+| `HELA_ALLOWED_ROOTS` (or `ALLOWED_ROOTS`) | *unset = full access* | Colon-separated workspace roots; when set, every path argument is canonicalized (symlink-aware, including non-existent tails) and tools outside the roots are denied. Directory listings, search and glob results skip symbolic links entirely, so a link inside a root cannot expose metadata or descendants outside it. Logged to stderr on startup either way. |
 | `HELA_ENVELOPE` | *unset = off* | Set to `true` to wrap tool results in the canonical HeLaResult envelope (`ok/summary/data/artifacts/provenance/warnings/sideEffects/execution`; mutating tools also report `sideEffects`). Off = byte-identical legacy output. |
 
 ### For Cursor IDE

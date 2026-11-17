@@ -61,6 +61,7 @@ export class AdvancedOperations {
       for (const file of files) {
         try {
           const fullPath = join(resolvedDir, String(file));
+          if ((await fs.lstat(fullPath)).isSymbolicLink()) continue;
           const fileInfo = await FileOperations.getFileInfo({ path: fullPath, followSymlinks: true });
           
           if (!fileInfo.success || !fileInfo.data?.isFile) {

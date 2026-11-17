@@ -68,7 +68,7 @@ export class FileSystemMCPServer {
     const server = new Server(
       {
         name: 'filesystem-mcp-server',
-        version: '3.0.1',
+        version: '3.0.2',
       },
       {
         capabilities: {

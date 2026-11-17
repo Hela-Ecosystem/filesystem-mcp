@@ -42,7 +42,7 @@ export class HttpAdapter {
             server: 'filesystem-mcp',
             role: 'hela-membrane',
             transport: 'stateless-http',
-            version: '3.0.1',
+            version: '3.0.2',
             protocolVersion: '2026-07-28',
           }));
           return;
@@ -56,7 +56,7 @@ export class HttpAdapter {
           });
           res.end(JSON.stringify({
             name: 'filesystem-mcp-server',
-            version: '3.0.1',
+            version: '3.0.2',
             protocolVersion: '2026-07-28',
             role: 'hela-membrane',
             capabilities: {
@@ -143,7 +143,7 @@ export class HttpAdapter {
                 id,
                 result: {
                   name: 'filesystem-mcp-server',
-                  version: '3.0.1',
+                  version: '3.0.2',
                   protocolVersion: '2026-07-28',
                   role: 'hela-membrane',
                   capabilities: { tools: {}, resources: {} },
