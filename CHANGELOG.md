@@ -1,3 +1,8 @@
+## [3.0.3] - 2026-11-18
+
+### Fixed
+- Keep advertised MCP and HTTP server versions in sync with package metadata through a single-source version guard.
+
 # Changelog
 
 All notable changes to this project.

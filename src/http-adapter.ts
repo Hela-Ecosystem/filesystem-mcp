@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { VERSION } from './version.js';
 
 export interface HttpAdapterOptions {
   port?: number;
@@ -42,7 +43,7 @@ export class HttpAdapter {
             server: 'filesystem-mcp',
             role: 'hela-membrane',
             transport: 'stateless-http',
-            version: '3.0.2',
+            version: VERSION,
             protocolVersion: '2026-07-28',
           }));
           return;
@@ -56,7 +57,7 @@ export class HttpAdapter {
           });
           res.end(JSON.stringify({
             name: 'filesystem-mcp-server',
-            version: '3.0.2',
+            version: VERSION,
             protocolVersion: '2026-07-28',
             role: 'hela-membrane',
             capabilities: {
@@ -143,7 +144,7 @@ export class HttpAdapter {
                 id,
                 result: {
                   name: 'filesystem-mcp-server',
-                  version: '3.0.2',
+                  version: VERSION,
                   protocolVersion: '2026-07-28',
                   role: 'hela-membrane',
                   capabilities: { tools: {}, resources: {} },

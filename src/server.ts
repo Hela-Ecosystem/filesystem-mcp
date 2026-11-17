@@ -13,6 +13,7 @@ import { AdvancedOperations } from './advanced-operations.js';
 import { loadWorkspacePolicy, policyCheck, type WorkspacePolicy } from './policy.js';
 import { textResult, errorResult } from './envelope.js';
 import { HttpAdapter } from './http-adapter.js';
+import { VERSION } from './version.js';
 
 interface DirectoryStructure {
   name: string;
@@ -68,7 +69,7 @@ export class FileSystemMCPServer {
     const server = new Server(
       {
         name: 'filesystem-mcp-server',
-        version: '3.0.2',
+        version: VERSION,
       },
       {
         capabilities: {
