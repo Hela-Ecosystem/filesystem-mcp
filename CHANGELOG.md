@@ -7,6 +7,11 @@
 
 All notable changes to this project.
 
+## [3.0.5] - 2026-11-19
+
+### Changed
+- Upgrade Zod to 4.6 and glob to 14, preserving file search and discovery behavior.
+
 ## [3.0.4] - 2026-11-19
 
 ### Changed

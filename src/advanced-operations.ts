@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { basename, extname, join, resolve } from 'path';
-import { glob, type GlobOptions } from 'glob';
+import { globIterate, type GlobOptions } from 'glob';
 import type { Stats } from 'fs';
 import archiver from 'archiver';
 import chokidar from 'chokidar';
@@ -47,7 +47,10 @@ export class AdvancedOperations {
         globPattern = join(searchPattern, depthPattern);
       }
 
-      const files = await glob(globPattern, globOptions);
+      const files: string[] = [];
+      for await (const file of globIterate(globPattern, globOptions)) {
+        files.push(String(file));
+      }
 
       // Create regex pattern
       let regexPattern = pattern;

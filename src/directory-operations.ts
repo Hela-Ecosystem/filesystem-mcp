@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
-import { glob, type GlobOptions } from 'glob';
+import { globIterate, type GlobOptions } from 'glob';
 import { CreateDirectorySchema, ListDirectorySchema, FindFilesSchema } from './types.js';
 import type { FileInfo, FileOperationResult, CreateDirectoryArgs, ListDirectoryArgs, FindFilesArgs } from './types.js';
 import { FileOperations } from './file-operations.js';
@@ -105,7 +105,10 @@ export class DirectoryOperations {
       };
       
       // Use the pattern directly with glob
-      const matches = await glob(pattern, globOptions);
+      const matches: string[] = [];
+      for await (const match of globIterate(pattern, globOptions)) {
+        matches.push(String(match));
+      }
       
       // Get file info for each match
       const fileInfos: FileInfo[] = [];
