@@ -7,6 +7,11 @@
 
 All notable changes to this project.
 
+## [3.0.4] - 2026-11-19
+
+### Changed
+- npm audit fix clears seven advisories. Three remain and need breaking majors (zod 3 to 4, glob 10 to 14); tracked separately.
+
 ## [3.0.2] - 2026-11-18
 
 ### Security
