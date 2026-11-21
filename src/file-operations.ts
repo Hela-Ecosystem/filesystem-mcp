@@ -14,35 +14,54 @@ export class FileOperations {
     content: string | Buffer;
     encoding: string;
     size: number;
+    startByte?: number;
+    endByte?: number;
   }>> {
     try {
       const { path, encoding = 'utf8', offset, limit } = ReadFileSchema.parse(args);
+      const textEncoding: string = encoding ?? 'utf8';
       
       // Check if file exists
       await fs.access(path);
       
       let content: string | Buffer;
-      
+      let startByte: number | undefined;
+      let endByte: number | undefined;
+
       if (offset !== undefined || limit !== undefined) {
-        // Read specific range
+        // Read specific range. For text encodings the range is snapped to character
+        // boundaries: decoding half a sequence produces U+FFFD and, when paging, the
+        // character is unrecoverable (filesystem-mcp#25).
         const buffer = await fs.readFile(path);
-        const start = offset || 0;
-        const end = limit ? start + limit : buffer.length;
+        let start = Math.max(0, Math.min(offset ?? 0, buffer.length));
+        let end = limit ? Math.min(buffer.length, start + limit) : buffer.length;
+
+        if (textEncoding === 'utf8') {
+          while (start > 0 && start < buffer.length && ((buffer[start] ?? 0) & 0xc0) === 0x80) start--;
+          while (end > start && end < buffer.length && ((buffer[end] ?? 0) & 0xc0) === 0x80) end++;
+        } else if (textEncoding === 'utf16le') {
+          start -= start % 2;
+          end -= end % 2;
+        }
+
         const slice = buffer.slice(start, end);
-        content = encoding === 'utf8' ? slice.toString(encoding) : slice;
+        content = textEncoding === 'utf8' || textEncoding === 'utf16le' ? slice.toString(textEncoding as BufferEncoding) : slice;
+        startByte = start;
+        endByte = end;
       } else {
         // Read entire file
-        content = await fs.readFile(path, encoding);
+        content = await fs.readFile(path, textEncoding as BufferEncoding);
       }
-      
+
       return {
         success: true,
         message: `File read successfully`,
         path,
         data: {
           content,
-          encoding,
-          size: Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, encoding)
+          encoding: textEncoding,
+          size: Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, textEncoding as BufferEncoding),
+          ...(startByte !== undefined ? { startByte, endByte } : {})
         }
       };
     } catch (error) {

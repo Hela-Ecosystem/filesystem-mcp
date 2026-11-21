@@ -277,7 +277,7 @@ export class FileSystemMCPServer {
           },
           {
             name: 'watch_file',
-            description: 'Watch file or directory for changes',
+            description: 'Watch file or directory for changes. Repeat calls return the events buffered since the previous call; stop_watching returns any remaining events.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -332,7 +332,7 @@ export class FileSystemMCPServer {
           },
           {
             name: 'extract_archive',
-            description: 'Extract archive to destination',
+            description: 'Extract archive to destination. Reports extracted and skipped entries; path-traversal entries are rejected and listed with a reason.',
             inputSchema: {
               type: 'object',
               properties: {

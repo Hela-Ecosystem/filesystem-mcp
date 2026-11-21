@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
-import { basename, extname, join, resolve } from 'path';
+import { basename, dirname, extname, isAbsolute, join, resolve, sep } from 'path';
+import { createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
 import { globIterate, type GlobOptions } from 'glob';
 import type { Stats } from 'fs';
 import archiver from 'archiver';
@@ -13,6 +15,7 @@ import { FileOperations } from './file-operations.js';
  */
 export class AdvancedOperations {
   private static watchers = new Map<string, chokidar.FSWatcher>();
+  private static watchBuffers = new Map<string, FileWatchEvent[]>();
 
   /**
    * Search for text patterns in files
@@ -138,9 +141,21 @@ export class AdvancedOperations {
       // Check if path exists
       await fs.access(path);
 
-      // Stop existing watcher if any
+      // A repeat call is how a caller collects events: return what the existing
+      // watcher has buffered instead of restarting it and losing them
+      // (filesystem-mcp#27).
       if (this.watchers.has(path)) {
-        await this.stopWatching(path);
+        return {
+          success: true,
+          message: 'Watching already active; returning buffered events',
+          path,
+          data: {
+            watching: true,
+            recursive,
+            ignoreInitial,
+            events: this.drainWatchEvents(path),
+          },
+        };
       }
 
       const watcher = chokidar.watch(path, {
@@ -153,38 +168,43 @@ export class AdvancedOperations {
 
       this.watchers.set(path, watcher);
 
-      const events: FileWatchEvent[] = [];
+      const push = (event: FileWatchEvent) => {
+        const buffered = this.watchBuffers.get(path) ?? [];
+        buffered.push(event);
+        if (buffered.length > 500) buffered.splice(0, buffered.length - 500);
+        this.watchBuffers.set(path, buffered);
+      };
 
       watcher
         .on('add', (filePath, stats) => {
-          events.push({
+          push({
             type: 'add',
             path: filePath,
             stats: stats ? this.statsToFileInfo(filePath, stats) : undefined
           });
         })
         .on('change', (filePath, stats) => {
-          events.push({
+          push({
             type: 'change',
             path: filePath,
             stats: stats ? this.statsToFileInfo(filePath, stats) : undefined
           });
         })
         .on('unlink', (filePath) => {
-          events.push({
+          push({
             type: 'unlink',
             path: filePath
           });
         })
         .on('addDir', (dirPath, stats) => {
-          events.push({
+          push({
             type: 'addDir',
             path: dirPath,
             stats: stats ? this.statsToFileInfo(dirPath, stats) : undefined
           });
         })
         .on('unlinkDir', (dirPath) => {
-          events.push({
+          push({
             type: 'unlinkDir',
             path: dirPath
           });
@@ -192,6 +212,14 @@ export class AdvancedOperations {
         .on('error', (error) => {
           console.error('Watcher error:', error);
         });
+
+      // Do not report "watching" before chokidar has completed its initial scan:
+      // a write in that window is missed, which is exactly the silent-no-events
+      // failure this tool was reported for.
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 5000);
+        watcher.once('ready', () => { clearTimeout(timer); resolve(); });
+      });
 
       return {
         success: true,
@@ -201,7 +229,8 @@ export class AdvancedOperations {
           watching: true,
           recursive,
           ignoreInitial,
-          events: events.slice(-10) // Return last 10 events
+          // Empty on start; poll with another watch_file call to collect new events.
+          events: this.drainWatchEvents(path),
         }
       };
     } catch (error) {
@@ -214,6 +243,13 @@ export class AdvancedOperations {
     }
   }
 
+  /** Take and clear the buffered events for one watched path. */
+  private static drainWatchEvents(path: string): FileWatchEvent[] {
+    const buffered = this.watchBuffers.get(path) ?? [];
+    this.watchBuffers.set(path, []);
+    return buffered;
+  }
+
   /**
    * Stop watching a file or directory
    */
@@ -223,11 +259,13 @@ export class AdvancedOperations {
       if (watcher) {
         await watcher.close();
         this.watchers.delete(path);
+        const events = this.drainWatchEvents(path);
+        this.watchBuffers.delete(path);
         return {
           success: true,
           message: 'Watching stopped successfully',
           path,
-          data: { watching: false }
+          data: { watching: false, events }
         };
       } else {
         return {
@@ -274,8 +312,15 @@ export class AdvancedOperations {
         processedContent2 = processedContent2.toLowerCase();
       }
 
-      const lines1 = processedContent1.split('\n');
-      const lines2 = processedContent2.split('\n');
+      // A trailing newline does not start a new line; split() counts one extra empty
+      // segment (filesystem-mcp#28).
+      const splitLines = (text: string): string[] => {
+        const parts = text.split('\n');
+        if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
+        return parts;
+      };
+      const lines1 = splitLines(processedContent1);
+      const lines2 = splitLines(processedContent2);
 
       const differences: Array<{
         line: number;
@@ -309,8 +354,9 @@ export class AdvancedOperations {
           identical,
           differences,
           totalDifferences: differences.length,
-          file1: { path: file1, lines: lines1.length, size: content1.length },
-          file2: { path: file2, lines: lines2.length, size: content2.length },
+          // `size` is bytes everywhere else in this cell; characters get their own field.
+          file1: { path: file1, lines: lines1.length, size: Buffer.byteLength(content1, 'utf8'), characters: content1.length },
+          file2: { path: file2, lines: lines2.length, size: Buffer.byteLength(content2, 'utf8'), characters: content2.length },
           options: { ignoreWhitespace, ignoreCase }
         }
       };
@@ -403,26 +449,49 @@ export class AdvancedOperations {
       await fs.access(archivePath);
       await fs.mkdir(destination, { recursive: true });
 
-      // For now, we'll use a simple implementation
-      // In a real implementation, you'd use proper archive extraction libraries
-      const { createReadStream } = await import('fs');
-      const stream = createReadStream(archivePath);
       const unzipper = await import('unzipper');
-      const extract = stream.pipe(unzipper.Extract({ path: destination }));
+      const directory = await unzipper.Open.file(archivePath);
+      const root = resolve(destination);
+      const rootPrefix = root.endsWith(sep) ? root : root + sep;
 
-      await new Promise((resolve, reject) => {
-        extract.on('close', resolve);
-        extract.on('error', reject);
-      });
+      const entries: string[] = [];
+      const skipped: Array<{ entry: string; reason: string }> = [];
+
+      for (const entry of directory.files as any[]) {
+        const entryPath: string = entry.path;
+        const target = resolve(root, entryPath);
+        const contained = target === root || target.startsWith(rootPrefix);
+
+        // Reject traversal explicitly. The library used to drop these silently, so the
+        // caller was told "success" about a partial extraction and the archive's
+        // suspicious content was never surfaced (filesystem-mcp#26).
+        if (isAbsolute(entryPath) || !contained) {
+          skipped.push({ entry: entryPath, reason: 'path traversal' });
+          continue;
+        }
+
+        if (entry.type === 'Directory') {
+          await fs.mkdir(target, { recursive: true });
+          continue;
+        }
+
+        await fs.mkdir(dirname(target), { recursive: true });
+        await pipeline(entry.stream(), createWriteStream(target));
+        entries.push(entryPath);
+      }
 
       return {
         success: true,
-        message: 'Archive extracted successfully',
+        message: skipped.length
+          ? `Archive extracted with ${skipped.length} entr${skipped.length === 1 ? 'y' : 'ies'} skipped`
+          : 'Archive extracted successfully',
         path: destination,
         data: {
           archivePath,
           destination,
-          extracted: true
+          extracted: entries.length,
+          entries,
+          skipped,
         }
       };
     } catch (error) {
