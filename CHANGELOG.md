@@ -6,15 +6,6 @@
 - `watch_file` can deliver events. They were collected into a local array that was discarded on return, so a watcher consumed a handle and reported `events: []` forever. Events are buffered per path, a repeat `watch_file` call returns what accumulated since the previous call, `stop_watching` returns the remainder, and the tool now waits for chokidar's initial scan before reporting success — writes in that window were previously missed. (`filesystem-mcp#27`)
 - `compare_files` reports `size` in bytes like every other tool, adds `characters` for the code-unit count, and counts lines without treating a trailing newline as an extra empty line. (`filesystem-mcp#28`)
 
-## [3.0.3] - 2026-11-18
-
-### Fixed
-- Keep advertised MCP and HTTP server versions in sync with package metadata through a single-source version guard.
-
-# Changelog
-
-All notable changes to this project.
-
 ## [3.0.5] - 2026-11-19
 
 ### Changed
@@ -24,6 +15,15 @@ All notable changes to this project.
 
 ### Changed
 - npm audit fix clears seven advisories. Three remain and need breaking majors (zod 3 to 4, glob 10 to 14); tracked separately.
+
+## [3.0.3] - 2026-11-18
+
+### Fixed
+- Keep advertised MCP and HTTP server versions in sync with package metadata through a single-source version guard.
+
+# Changelog
+
+All notable changes to this project.
 
 ## [3.0.2] - 2026-11-18
 
@@ -44,4 +44,3 @@ All notable changes to this project.
 
 ### Changed
 - **Version reset to 3.0.0** — per-server version metadata baseline reset (Phase 7). All `package.json`, MCP `ServerInfo.version`, and HTTP metadata now report `3.0.0`. This is a metadata/interface baseline reset; for `hela-plastid` it is not an upgrade from the previous `4.2.0` advert.
-

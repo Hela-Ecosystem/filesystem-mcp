@@ -26,7 +26,7 @@ Delete file or directory
 
 ## `extract_archive`
 
-Extract archive to destination
+Extract archive to destination. Reports extracted and skipped entries; path-traversal entries are rejected and listed with a reason.
 
 ## `find_files`
 
@@ -62,7 +62,7 @@ Stop watching a file or directory
 
 ## `watch_file`
 
-Watch file or directory for changes
+Watch file or directory for changes. Repeat calls return the events buffered since the previous call; stop_watching returns any remaining events.
 
 ## `write_file`
 
